@@ -207,12 +207,14 @@ botão **Regar agora por 3 s** e o interruptor da rega automática.
 - **Relé de 5 V** em vez de um módulo compatível com 3,3 V: funciona com o ajuste dos diodos,
   mas um relé de 3,3 V (ou com optoacoplador e JD-VCC) seria a solução mais limpa.
 - O histórico do painel guarda só os últimos 12 minutos e é zerado quando o ESP32 reinicia.
-- A calibração foi feita no ar e na água; os limites ainda devem ser validados no substrato.
+- O acompanhamento contínuo de uma semana previsto na proposta não foi realizado; a validação
+  ficou restrita aos testes em bancada e aos testes de falha.
 
 ## Documentação extra
 
 - [`docs/montagem.md`](docs/montagem.md): montagem passo a passo, furo a furo.
-- [`docs/diario-de-bordo.md`](docs/diario-de-bordo.md): problemas encontrados e como foram resolvidos.
+- [`docs/diario-de-bordo.md`](docs/diario-de-bordo.md): problemas encontrados, como foram resolvidos,
+  testes de falha e situação final.
 
 ## Equipe
 

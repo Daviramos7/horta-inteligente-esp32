@@ -55,11 +55,11 @@ Conferido antes de ligar a bomba.
 
 ## 8. Bomba recebe ON mas não gira
 
-- **Sintoma:** Monitor Serial mostra `Bomba: ON`, relé faz "tec", mas a bomba não gira.
-- **Conclusão:** lógica e relé corretos; a falha está no caminho de energia da bomba (fonte,
-  emendas dos fios da bomba nos jumpers ou contatos na protoboard).
-- **Status:** **pendente**. Próximo passo: medir 5 V nos bornes do adaptador e depois entre
-  `g40` e `g44` com o relé ligado, para localizar onde a tensão se perde.
+- **Sintoma:** Monitor Serial mostrava `Bomba: ON` e o relé fazia "tec", mas a bomba não girava.
+- **Conclusão:** lógica e relé corretos; a falha estava no caminho de energia da bomba
+  (fonte, emendas e contatos).
+- **Status:** **resolvido** pela equipe. A bomba passou a regar acionada pelo relé, com o diodo
+  e o capacitor de proteção instalados.
 
 ## 9. Interface e MQTT
 
@@ -70,10 +70,34 @@ Conferido antes de ligar a bomba.
 - O Arduino IDE travou uma vez (`arduino-verify-sketch cannot be executed`, status "Offline");
   resolvido fechando e abrindo o IDE. Não era erro de código.
 
-## Pendências
+## 10. Calibração no substrato
 
-- [ ] Resolver a bomba que não gira (item 8).
-- [ ] Validar a conexão MQTT real (ESP32 publicando e painel online recebendo).
-- [ ] Ajustar os limites de rega com o sensor no substrato do vaso.
-- [ ] Decidir sobre o sensor de nível do reservatório (comprar ou registrar como limitação).
-- [ ] Testes de falha previstos na proposta: sensor desconectado, perda de Wi-Fi, limite de tempo.
+Feita pela equipe com o sensor no vaso, em terra seca e após a rega, conforme previsto na
+proposta. Os valores usados no firmware ficam nas constantes `SECO`, `MOLHADO`, `LIGA_ACIMA` e
+`DESLIGA_ABAIXO`.
+
+## 11. Validação do MQTT
+
+O painel online (`dashboard/dashboard_online.html`) recebeu os dados publicados pelo ESP32 via
+`broker.hivemq.com`, confirmando a comunicação MQTT de ponta a ponta.
+
+## 12. Testes de falha
+
+Realizados pela equipe:
+
+- [x] Sensor de solo desconectado: a bomba não deve ligar.
+- [x] Perda de Wi-Fi/internet: a rega local deve continuar e o painel online deve indicar a horta
+  como offline.
+- [x] Limite de tempo: com o sensor no ar, a bomba deve desligar sozinha em 10 s.
+- [x] Inicialização: a bomba deve começar desligada.
+
+## Situação final
+
+- [x] Bomba funcionando pelo relé.
+- [x] Comunicação MQTT validada com o painel online.
+- [x] Calibração no substrato.
+- [x] Testes de falha.
+- [ ] Sensor de nível do reservatório: **não instalado**, registrado como limitação. O uso
+  permanece supervisionado, com abastecimento manual.
+- [ ] Acompanhamento de uma semana: **não realizado** por falta de tempo; registrado como
+  limitação.
