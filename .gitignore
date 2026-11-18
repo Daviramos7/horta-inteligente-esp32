@@ -1,0 +1,4 @@
+firmware/horta_inteligente/segredos.h
+*.bin
+build/
+.vscode/

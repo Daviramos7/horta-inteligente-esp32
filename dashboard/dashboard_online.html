@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Horta do cacto (online)</title>
+<style>
+:root{--fundo:#DCE4D2;--tinta:#1E2D1C;--suave:#56664F;--cacto:#3E7B4F;--terra:#7A5536;--agua:#3D8FD6;--sol:#D98E1F;--painel:#EDF1E6;--alerta:#B4412E}
+*{box-sizing:border-box;margin:0}
+body{background:var(--fundo);color:var(--tinta);font-family:"Segoe UI Variable Text","Segoe UI",system-ui,-apple-system,Roboto,sans-serif;line-height:1.5}
+main{max-width:860px;margin:0 auto;padding:28px 20px 48px}
+header{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px;margin-bottom:20px}
+h1{font-size:1.6rem;font-weight:600;letter-spacing:-.01em}
+#st{font-size:.9rem;color:var(--suave)}#st.err{color:var(--alerta)}
+.vaso{display:grid;grid-template-columns:minmax(180px,260px) 1fr;gap:28px;align-items:center;background:var(--painel);border-radius:28px;padding:24px}
+.vaso svg{width:100%;height:auto}
+.grande{font-size:clamp(4rem,14vw,7.5rem);font-weight:300;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-.04em}
+.grande small{font-size:.35em;font-weight:400;letter-spacing:0;margin-left:4px}
+.sub{color:var(--suave);margin-top:4px}
+#msg{margin-top:16px;font-size:1.1rem;font-weight:600}
+#motivo{color:var(--suave);font-size:.95rem}
+.dados{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:#C4CEB9;border-radius:18px;overflow:hidden;margin:18px 0}
+.dados div{background:var(--painel);padding:16px}
+.dados span{display:block;color:var(--suave);font-size:.85rem}
+.dados b{font-size:1.6rem;font-weight:500;font-variant-numeric:tabular-nums}
+#bomba.on{color:var(--agua)}
+.hist{background:var(--painel);border-radius:18px;padding:18px}
+.hist h2,.ctl h2{font-size:1rem;font-weight:600;margin-bottom:8px}
+.hist svg{width:100%;height:110px;display:block}
+.ctl{display:flex;flex-wrap:wrap;gap:16px;align-items:center;margin-top:18px}
+button{font:inherit;font-weight:600;font-size:1.05rem;background:var(--agua);color:#fff;border:0;border-radius:999px;padding:14px 26px;cursor:pointer}
+button:disabled{background:#9DB3C6;cursor:not-allowed}
+button:focus-visible,input:focus-visible{outline:3px solid var(--tinta);outline-offset:3px}
+label{display:flex;gap:10px;align-items:center;cursor:pointer}
+input[type=checkbox]{width:22px;height:22px;accent-color:var(--cacto)}
+.aviso{flex-basis:100%;color:var(--suave);font-size:.9rem}
+#aguaNivel{transition:y .8s ease,height .8s ease}
+@media (max-width:620px){.vaso{grid-template-columns:1fr;text-align:center}.vaso svg{max-width:220px;margin:0 auto}.dados{grid-template-columns:repeat(2,1fr)}}
+@media (prefers-reduced-motion:reduce){#aguaNivel{transition:none}}
+</style></head><body><main>
+<header><h1>Horta do cacto</h1><p id="st" role="status">Conectando ao broker MQTT…</p></header>
+
+<section class="vaso" aria-label="Umidade do solo">
+<svg viewBox="0 0 220 230" role="img" aria-label="Vaso com nível de umidade">
+<defs><clipPath id="corte"><path d="M48 112H172L156 218H64Z"/></clipPath></defs>
+<rect x="100" y="34" width="22" height="82" rx="11" fill="#3E7B4F"/>
+<path d="M100 78H86a9 9 0 0 1-9-9V54a6 6 0 0 1 12 0v12h11" fill="#3E7B4F"/>
+<path d="M122 66h12V48a6 6 0 0 1 12 0v18a9 9 0 0 1-9 9h-15" fill="#3E7B4F"/>
+<g clip-path="url(#corte)">
+<rect x="0" y="112" width="220" height="110" fill="#7A5536"/>
+<rect id="aguaNivel" x="0" y="218" width="220" height="0" fill="#3D8FD6" opacity=".55"/>
+<line id="lLiga" x1="40" x2="180" stroke="#F4E7D0" stroke-width="1.5" stroke-dasharray="4 4"/>
+<line id="lDesl" x1="40" x2="180" stroke="#F4E7D0" stroke-width="1.5" stroke-dasharray="4 4"/>
+</g>
+<path d="M44 106H176V116H44Z" fill="#9C6B45"/>
+<path d="M48 112H172L156 218H64Z" fill="none" stroke="#5B3E27" stroke-width="3"/>
+<text id="tLiga" x="182" font-size="11" fill="#56664F">rega</text>
+<text id="tDesl" x="182" font-size="11" fill="#56664F">para</text>
+</svg>
+<div>
+<div class="grande"><span id="pct">--</span><small>%</small></div>
+<p class="sub">umidade da terra no vaso</p>
+<p id="msg">Lendo o sensor…</p>
+<p id="motivo"></p>
+</div>
+</section>
+
+<section class="dados">
+<div><span>Temperatura do ar</span><b id="t">--</b></div>
+<div><span>Umidade do ar</span><b id="h">--</b></div>
+<div><span>Bomba</span><b id="bomba">--</b></div>
+<div><span>Regas desde que ligou</span><b id="regas">--</b></div>
+</section>
+
+<section class="hist">
+<h2>Umidade da terra nos últimos 12 minutos</h2>
+<svg viewBox="0 0 300 100" preserveAspectRatio="none" aria-label="Gráfico de umidade do solo">
+<rect id="faixa" x="0" width="300" fill="#3D8FD6" opacity=".12"/>
+<polyline id="linha" fill="none" stroke="#7A5536" stroke-width="2" vector-effect="non-scaling-stroke"/>
+</svg>
+<p id="ultima" class="sub"></p>
+</section>
+
+<section class="ctl">
+<button id="regar">Regar agora por 3 s</button>
+<label><input type="checkbox" id="auto" checked> Rega automática</label>
+<p class="aviso">Comandos passam pelas mesmas proteções da horta: 3 s por rega manual e nenhuma rega com o sensor de solo sem leitura. Antes de regar, confira se a bomba está coberta de água.</p>
+</section>
+</main>
+<script src="https://unpkg.com/mqtt@5.10.1/dist/mqtt.min.js"></script>
+<script>
+
+const $=id=>document.getElementById(id);
+const nivelY=p=>218-p*1.06;
+function tempo(s){if(s<0)return'Ainda não regou desde que ligou.';if(s<60)return'Última rega há '+s+' s.';return'Última rega há '+Math.round(s/60)+' min.';}
+function desenhar(d){
+  $('pct').textContent=d.ok?d.pct:'--';
+  const a=$('aguaNivel'),y=nivelY(d.ok?d.pct:0);a.setAttribute('y',y);a.setAttribute('height',218-y);
+  for(const[k,v]of[['Liga',d.liga],['Desl',d.desliga]]){const yy=nivelY(v);$('l'+k).setAttribute('y1',yy);$('l'+k).setAttribute('y2',yy);$('t'+k).setAttribute('y',yy+4);}
+  $('msg').textContent=!d.ok?'Sensor de solo sem leitura: confira o fio amarelo no D34.':d.pump?'Regando agora.':d.pct<d.liga?'Terra seca.':d.pct<d.desliga?'Terra levemente úmida, boa para o cacto.':'Terra molhada: o cacto não precisa de água.';
+  $('motivo').textContent=d.motivo+(d.pausa>0?' ('+d.pausa+' s)':'');
+  $('t').textContent=d.t===null?'sem leitura':d.t.toFixed(1)+' °C';
+  $('h').textContent=d.h===null?'sem leitura':Math.round(d.h)+' %';
+  $('bomba').textContent=d.pump?'Ligada':'Desligada';$('bomba').className=d.pump?'on':'';
+  $('regas').textContent=d.regas;
+  $('ultima').textContent=tempo(d.ultima);
+  $('regar').disabled=d.pump;
+  if(document.activeElement!==$('auto'))$('auto').checked=d.auto;
+  const f=$('faixa');f.setAttribute('y',100-d.desliga);f.setAttribute('height',d.desliga-d.liga);
+  const pts=[];d.hist.forEach((v,i)=>{if(v<=100)pts.push((i*300/71).toFixed(1)+','+(100-v));});
+  $('linha').setAttribute('points',pts.join(' '));
+}
+
+const BASE='uninassau/hortacacto-0e80';
+let ultimo=0,online=null;
+function status(t,err){$('st').textContent=t;$('st').className=err?'err':'';}
+const cli=mqtt.connect('wss://broker.hivemq.com:8884/mqtt',{clientId:'painel-'+Math.random().toString(16).slice(2,10),reconnectPeriod:3000});
+cli.on('connect',()=>{status('Conectado ao broker. Esperando dados da horta…');cli.subscribe(BASE+'/#');});
+cli.on('reconnect',()=>status('Reconectando ao broker MQTT…',true));
+cli.on('offline',()=>status('Sem internet neste aparelho.',true));
+cli.on('message',(topico,msg)=>{
+  const txt=msg.toString();
+  if(topico===BASE+'/status'){online=txt==='online';if(!online)status('A horta está desligada ou sem internet.',true);return;}
+  if(topico===BASE+'/estado'){try{desenhar(JSON.parse(txt));ultimo=Date.now();}catch(e){}}
+});
+setInterval(()=>{
+  if(!cli.connected)return;
+  if(online===false)return;
+  if(!ultimo)return;
+  const s=Math.round((Date.now()-ultimo)/1000);
+  if(s>20)status('Sem notícias da horta há '+s+' s. Confira a energia e o Wi-Fi dela.',true);
+  else status('Ao vivo pela internet (MQTT). Última leitura há '+s+' s.');
+},1000);
+function comando(c){if(cli.connected){cli.publish(BASE+'/comando',c);}else status('Sem conexão com o broker: comando não enviado.',true);}
+$('regar').onclick=()=>{$('regar').disabled=true;comando('regar');};
+$('auto').onchange=e=>comando(e.target.checked?'auto:1':'auto:0');
+</script></body></html>
